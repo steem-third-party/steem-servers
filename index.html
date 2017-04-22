@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Demo</title>
+    <script src="steem-1.0.2-min.js"></script>
+    <script>
+      var remote = new Steem.Remote({
+        servers: [
+          'wss://steemd.steemit.com',
+          'wss://steemd.steemitdev.com',
+          'wss://gtg.steem.house:8090',          
+          'wss://seed.bitcoiner.me',
+          'wss://this.piston.rocks',
+          'wss://node.steem.ws',
+        ]
+      });
+
+      var states = {};
+
+      function output(inp) {
+          document.getElementById('log').appendChild(document.createElement('pre')).innerHTML = inp;
+      }
+
+      function clear_log() {
+        document.getElementById('log').innerHTML = '';
+      }
+
+      window.onload = function() {
+          output('connecting...')
+          remote.connect(function(){
+            output('connected.')
+          });
+
+          remote.servers.forEach(function (s) {
+            states[s._url] = s._state;
+            s.on('state', function (state) {
+              states[s._url] = state;
+            })
+            s.on('properties', function (p) {
+              states[s._url] = [p.last_irreversible_block_num, p.head_block_number].join('/');
+            })
+          })
+
+          output(JSON.stringify(states, null, '  '));
+          var timer = setInterval(function () {
+            clear_log();
+            output(JSON.stringify(states, null, '  '));
+          }, 1000 * 3)
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Steem Servers</h1>
+    server_url: last_irreversible_block / head_block <br>
+    =============================================================
+    <div id='log'> </div>
+  </body>
+</html>
